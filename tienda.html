@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Todo Cosas</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef0ed; --card:#ffffff; --text:#1a1d1b; --muted:#5c625d; --accent:#e0611c; --accent-ink:#ffffff; --border:#d8dcd7; --steel:#2f3a36;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#141815; --card:#1e2320; --text:#eef0ed; --muted:#9aa39c; --border:#333a35; }
+}
+:root[data-theme="dark"]{ --bg:#141815; --card:#1e2320; --text:#eef0ed; --muted:#9aa39c; --border:#333a35; }
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+header{position:sticky;top:0;padding:calc(16px + env(safe-area-inset-top,0px)) 18px 16px;background:var(--steel);color:#fff;z-index:10;}
+h1{margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:28px;letter-spacing:.3px;}
+.sub{color:#c7cdc8;font-size:13px;margin-top:3px;}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 90px;}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:14px 16px 0;max-width:688px;margin:0 auto;}
+.tab{flex:none;padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;cursor:pointer;}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.grid{display:grid;gap:12px;margin-top:14px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.card h3{margin:0 0 4px;font-size:17px;font-weight:600;}
+.card p{margin:0;color:var(--muted);font-size:13px;line-height:1.4;}
+.row{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:10px;flex-wrap:wrap;}
+.price{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;}
+.stock{font-size:12px;color:var(--muted);margin-top:2px;}
+.stock.low{color:var(--accent);}
+.qty{display:flex;align-items:center;gap:8px;}
+.qty button{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:16px;cursor:pointer;}
+.qty span{min-width:22px;text-align:center;font-weight:600;}
+.buy{background:#25d366;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.buy:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;}
+.admin-btn{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:16px;background:var(--steel);color:#fff;border:none;border-radius:999px;padding:12px 18px;font-weight:600;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer;z-index:20;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30;align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--card);width:100%;max-width:720px;max-height:85vh;overflow-y:auto;border-radius:14px 14px 0 0;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));}
+.modal h2{margin-top:0;font-family:'Barlow Condensed',sans-serif;font-size:22px;}
+.field{margin-bottom:12px;}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;}
+input,select,textarea{width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;font-family:inherit;}
+.prod-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding:10px 0;gap:8px;}
+.prod-row div:first-child{font-size:14px;}
+.prod-row button{border:none;background:none;color:var(--accent);font-size:13px;cursor:pointer;font-weight:600;}
+.save-btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:11px;width:100%;font-weight:600;margin-top:6px;cursor:pointer;font-size:14px;}
+.empty{text-align:center;color:var(--muted);padding:36px 0;font-size:14px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Todo Cosas</h1>
+  <div class="sub">Herramientas, pinturas de piscina, motores de portón y más</div>
+</header>
+<div class="tabs" id="tabs"></div>
+<div class="wrap"><div class="grid" id="grid"></div></div>
+
+<button class="admin-btn" id="adminBtn" style="display:none">Panel admin</button>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">Producto</h2>
+    <div class="field"><label>Nombre</label><input id="fName"></div>
+    <div class="field"><label>Categoría</label>
+      <select id="fCat"><option>Herramientas</option><option>Pinturas de piscina</option><option>Motores de portón</option><option>Otros</option></select>
+    </div>
+    <div class="field"><label>Precio (CLP)</label><input id="fPrice" type="number" min="0"></div>
+    <div class="field"><label>Stock</label><input id="fStock" type="number" min="0"></div>
+    <div class="field"><label>Descripción (opcional)</label><textarea id="fDesc" rows="2"></textarea></div>
+    <button class="save-btn" id="fSave">Guardar producto</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="adminModalBg">
+  <div class="modal">
+    <h2>Panel de administrador</h2>
+    <button class="save-btn" id="newProdBtn">+ Agregar producto</button>
+    <div id="adminList" style="margin-top:16px;"></div>
+    <button class="save-btn" id="closeAdmin" style="background:var(--steel);margin-top:18px;">Cerrar panel</button>
+  </div>
+</div>
+
+<script>
+const WHATSAPP = "56981754395";
+let PRODUCTS = [];
+let editingId = null;
+let activeCat = "Todos";
+let qtyState = {};
+
+function fmt(n){return "$"+Number(n).toLocaleString("es-CL");}
+function categories(){return [...new Set(PRODUCTS.map(p=>p.cat))];}
+
+function renderTabs(){
+  const cats = ["Todos", ...categories()];
+  document.getElementById("tabs").innerHTML = cats.map(c=>
+    `<button class="tab ${c===activeCat?'active':''}" data-cat="${c}">${c}</button>`).join("");
+  document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{activeCat=b.dataset.cat;render();});
+}
+
+function renderGrid(){
+  const list = PRODUCTS.filter(p=>activeCat==="Todos"||p.cat===activeCat);
+  const grid = document.getElementById("grid");
+  if(!list.length){grid.innerHTML='<div class="empty">No hay productos en esta categoría todavía.</div>';return;}
+  grid.innerHTML = list.map(p=>{
+    const q = qtyState[p.id]||1;
+    const low = p.stock<=3 && p.stock>0;
+    const out = p.stock<=0;
+    return `<div class="card">
+      <h3>${p.name}</h3>
+      ${p.desc?`<p>${p.desc}</p>`:""}
+      <div class="row">
+        <div>
+          <div class="price">${fmt(p.price)}</div>
+          <div class="stock ${low?'low':''}">${out?'Sin stock':'Stock: '+p.stock+' disponibles'}</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="qty">
+          <button data-act="dec" data-id="${p.id}" ${out?'disabled':''}>-</button>
+          <span>${q}</span>
+          <button data-act="inc" data-id="${p.id}" ${out?'disabled':''}>+</button>
+        </div>
+        <button class="buy" data-id="${p.id}" ${out?'disabled':''}>Pedir por WhatsApp</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  grid.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{
+    const p = PRODUCTS.find(x=>x.id===b.dataset.id);
+    let q = qtyState[p.id]||1;
+    if(b.dataset.act==="inc") q = Math.min(p.stock,q+1);
+    else q = Math.max(1,q-1);
+    qtyState[p.id]=q;
+    renderGrid();
+  });
+  grid.querySelectorAll(".buy").forEach(b=>b.onclick=()=>{
+    const p = PRODUCTS.find(x=>x.id===b.dataset.id);
+    const q = qtyState[p.id]||1;
+    const msg = `Hola! Quiero pedir: ${p.name} x${q} (${fmt(p.price*q)}). ¿Está disponible?`;
+    window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`,"_blank");
+  });
+}
+
+function render(){renderTabs();renderGrid();}
+render();
+
+document.getElementById("modalBg").classList.remove("open");
+document.getElementById("adminModalBg").classList.remove("open");
+
+let userNs=null;
+(async()=>{
+  try{
+    userNs = await claude.use("user");
+    if(userNs && userNs.isOwner && userNs.isOwner()){
+      document.getElementById("adminBtn").style.display="block";
+    }
+  }catch(e){}
+})();
+
+document.getElementById("adminBtn").onclick=()=>{
+  renderAdminList();
+  document.getElementById("adminModalBg").classList.add("open");
+};
+document.getElementById("closeAdmin").onclick=()=>document.getElementById("adminModalBg").classList.remove("open");
+
+function renderAdminList(){
+  const el = document.getElementById("adminList");
+  if(!PRODUCTS.length){el.innerHTML='<div class="empty">Sin productos aún.</div>';return;}
+  el.innerHTML = PRODUCTS.map(p=>`<div class="prod-row">
+    <div>${p.name} — ${fmt(p.price)} — stock ${p.stock}</div>
+    <div><button data-id="${p.id}" data-act="edit">Editar</button> <button data-id="${p.id}" data-act="del">Eliminar</button></div>
+  </div>`).join("");
+  el.querySelectorAll("[data-act=edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.id));
+  el.querySelectorAll("[data-act=del]").forEach(b=>b.onclick=()=>{
+    PRODUCTS = PRODUCTS.filter(p=>p.id!==b.dataset.id);
+    renderAdminList();
+    publishState();
+  });
+}
+
+document.getElementById("newProdBtn").onclick=()=>openForm(null);
+
+function openForm(id){
+  editingId=id;
+  const p = PRODUCTS.find(x=>x.id===id);
+  document.getElementById("modalTitle").textContent = p?"Editar producto":"Nuevo producto";
+  document.getElementById("fName").value = p?p.name:"";
+  document.getElementById("fCat").value = p?p.cat:"Herramientas";
+  document.getElementById("fPrice").value = p?p.price:"";
+  document.getElementById("fStock").value = p?p.stock:"";
+  document.getElementById("fDesc").value = p?(p.desc||""):"";
+  document.getElementById("modalBg").classList.add("open");
+}
+
+document.getElementById("fSave").onclick=()=>{
+  const name = document.getElementById("fName").value.trim();
+  const cat = document.getElementById("fCat").value;
+  const price = Number(document.getElementById("fPrice").value)||0;
+  const stock = Number(document.getElementById("fStock").value)||0;
+  const desc = document.getElementById("fDesc").value.trim();
+  if(!name){alert("Ponle un nombre al producto");return;}
+  if(editingId){
+    const p = PRODUCTS.find(x=>x.id===editingId);
+    Object.assign(p,{name,cat,price,stock,desc});
+  } else {
+    PRODUCTS.push({id:"p"+Date.now(),name,cat,price,stock,desc});
+  }
+  document.getElementById("modalBg").classList.remove("open");
+  renderAdminList();
+  publishState();
+};
+
+async function publishState(){
+  render();
+  if(!userNs || !userNs.isOwner || !userNs.isOwner()) return;
+  try{
+    const artifact = await claude.use("artifact");
+    if(!artifact) return;
+    document.getElementById("modalBg").classList.remove("open");
+    document.getElementById("adminModalBg").classList.remove("open");
+    const html = document.documentElement.outerHTML.replace(
+      /let PRODUCTS = \[.*?\];/,
+      "let PRODUCTS = "+JSON.stringify(PRODUCTS)+";"
+    );
+    await artifact.publish("<!DOCTYPE html>\n"+html);
+  }catch(e){ console.error(e); }
+}
+</script>
+</body>
+</html>
